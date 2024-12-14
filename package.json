@@ -1,5 +1,5 @@
 {
-  "name": "customer-event-Manager",
+  "name": "customer-event-manager",
   "version": "1.0.0",
   "main": "index.js",
   "engines": {
@@ -7,7 +7,8 @@
   },
   "type": "module",
   "scripts": {
-    "start": "node /index.js"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js "
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -16,6 +17,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^5.10.9"
+    "mongoose": "^8.9.0",
+    "morgan": "^1.10.0"
   }
 }

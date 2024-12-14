@@ -5,76 +5,114 @@ import User from '../models/User.js'; // Assuming this is the correct path
 
 const router = express.Router();
 
-// Signup route with role validation
-router.post('/signup', async (req, res) => {
-  const { fullName, email, password, role } = req.body;
+// Environment variable for secret key
+const JWT_SECRET = process.env.JWT_SECRET || 'aIolnC0R1sH72ABX';
 
-  // Check if any required fields are missing
+// Register (Signup) Route
+router.post('/signup', async (req, res) => {
+  const { fullName, email, password, role, preferences } = req.body;
+
+  // Check if required fields are provided
   if (!fullName || !email || !password) {
-    return res.status(400).json({ message: 'All fields are required' });
+    return res.status(400).json({ message: 'Full name, email, and password are required' });
   }
 
-  // Validate the role to make sure it is either 'admin' or 'user'
+  // Validate role if provided (optional field)
   if (role && role !== 'admin' && role !== 'user') {
     return res.status(400).json({ message: 'Invalid role, must be either "admin" or "user"' });
   }
 
   try {
+    // Check if user with the same email already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create new user
     const newUser = new User({
       fullName,
       email,
-      password: hashedPassword,
-      role: role || 'user', // Default to 'user' if role is not provided
+      password,
+      role: role || 'user', // Default role to 'user'
+      preferences: preferences || {}, // Optional preferences field
     });
 
+    // Save user to database
     await newUser.save();
 
+    // Generate JWT token
     const token = jwt.sign(
       { userId: newUser._id, role: newUser.role },
-      'your-secret-key',
+      JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    res.status(201).json({ token });
+    // Send success response with token and user details
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: newUser._id,
+        fullName: newUser.fullName,
+        email: newUser.email,
+        role: newUser.role,
+        preferences: newUser.preferences,
+      },
+    });
   } catch (error) {
     console.error('Error during registration:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
-// Login route
+// Login Route
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
+  // Check if both email and password are provided
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
   try {
+    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Compare provided password with stored hash
+    const isMatch = await (password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // Generate JWT token
     const token = jwt.sign(
       { userId: user._id, role: user.role },
-      'your-secret-key',
+      JWT_SECRET,
       { expiresIn: '1h' }
     );
 
-    // Send token and role as response
-    res.status(200).json({ token, role: user.role });
+    // Send response with token, role, and user details
+    res.status(200).json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        preferences: user.preferences,
+      },
+    });
   } catch (error) {
     console.error('Error during login:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

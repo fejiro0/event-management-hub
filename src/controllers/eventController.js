@@ -3,20 +3,20 @@ import Event from '../models/Event.js';
 // Get all events
 export const getEvents = async (req, res) => {
   try {
-    const events = await Event.find().sort({ date: 1 }); // Fetch events sorted by date
+    const events = await Event.find();  // Retrieve events from the database
     res.status(200).json(events);
-  } catch (err) {
-    console.error('Error fetching events:', err);
-    res.status(500).json({ message: 'Error fetching events', error: err.message });
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).json({ message: 'Error fetching events', error: error.message });
   }
 };
 
-// Create a new event (Admin only)
+// Create a new event (Admin-only route)
 export const createEvent = async (req, res) => {
   const { name, date, location, time, description, capacity } = req.body;
 
   if (!name || !capacity || !date) {
-    return res.status(400).json({ message: 'Name, capacity, and date are required' });
+    return res.status(400).json({ message: 'Name, Capacity, and Date are required' });
   }
 
   try {
@@ -28,61 +28,50 @@ export const createEvent = async (req, res) => {
       description,
       capacity,
       availableSeats: capacity,
-      attendees: [], // Initialize attendees as an empty array
+      attendees: [],
     });
 
     await newEvent.save();
     res.status(201).json({ message: 'Event created successfully', event: newEvent });
-  } catch (err) {
-    console.error('Error creating event:', err);
-    res.status(500).json({ message: 'Error creating event', error: err.message });
+  } catch (error) {
+    console.error('Error creating event:', error);
+    res.status(500).json({ message: 'Error creating event', error: error.message });
+  }
+};
+
+// Calendar view for events (Example)
+export const calendarView = async (req, res) => {
+  try {
+    const events = await Event.find();  // Retrieve events for calendar view (you can modify this query based on your needs)
+    res.status(200).json(events);
+  } catch (error) {
+    console.error('Error fetching calendar events:', error);
+    res.status(500).json({ message: 'Error fetching events for calendar', error: error.message });
   }
 };
 
 // RSVP for an event
 export const rsvpEvent = async (req, res) => {
-  const { eventId, userId, userName } = req.body;
-
-  if (!eventId || !userId || !userName) {
-    return res.status(400).json({ message: 'Event ID, User ID, and User Name are required' });
-  }
+  const { eventId, userId } = req.body;
 
   try {
     const event = await Event.findById(eventId);
-
     if (!event) {
       return res.status(404).json({ message: 'Event not found' });
     }
 
-    if (event.availableSeats <= 0) {
-      return res.status(400).json({ message: 'No available seats' });
+    // Check if the user is already in the attendees list
+    if (event.attendees.includes(userId)) {
+      return res.status(400).json({ message: 'User has already RSVP\'d to this event' });
     }
 
-    // Check if the user has already RSVPed
-    const hasRSVPed = event.attendees.some(att => att.userId === userId);
-    if (hasRSVPed) {
-      return res.status(400).json({ message: 'User has already RSVPed for this event' });
-    }
-
-    // Add the user to attendees
-    event.attendees.push({ userId, name: userName });
-    event.availableSeats -= 1; // Decrease available seats by 1
-
+    // Add the user to the attendees list
+    event.attendees.push(userId);
     await event.save();
-    res.status(200).json({ message: 'RSVP successful', event });
-  } catch (err) {
-    console.error('Error RSVPing for event:', err);
-    res.status(500).json({ message: 'Error RSVPing for event', error: err.message });
-  }
-};
 
-// Get calendar view of events
-export const calendarView = async (req, res) => {
-  try {
-    const events = await Event.find().sort({ date: 1 });
-    res.status(200).json(events);
-  } catch (err) {
-    console.error('Error fetching events for calendar:', err);
-    res.status(500).json({ message: 'Error fetching calendar events', error: err.message });
+    res.status(200).json({ message: 'RSVP successful', event });
+  } catch (error) {
+    console.error('Error RSVPing to event:', error);
+    res.status(500).json({ message: 'Error RSVPing to event', error: error.message });
   }
 };
