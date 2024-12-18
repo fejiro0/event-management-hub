@@ -43,7 +43,7 @@ mongoose
 
 // Base Routes
 app.get('/', (req, res) => {
-  res.send('Hello, World!');
+  res.send('This is an endpoint for Event Campus Management System');
 });
 
 app.use('/api/auth', authRoutes); // Authentication routes
