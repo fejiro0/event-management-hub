@@ -2,31 +2,25 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import morgan from 'morgan'; 
-import { authMiddleware, checkAdmin } from './middleware/authMiddleware.js'; 
-
-// Import routes
+import morgan from 'morgan';
+import { authMiddleware, checkAdmin } from './middleware/authMiddleware.js';
 import authRoutes from './routes/authRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
-import Event from './models/Event.js';
 import userRoutes from './routes/user.js';
+import Event from './models/Event.js';
 
-
-// Load environment variables from .env file
 dotenv.config();
 
-// Initialize Express app
 const app = express();
 
-// Global Middleware
+// Middleware
 app.use(cors({
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-})); // Enable CORS for cross-origin requests
-app.use(express.json()); // Parse JSON request bodies
+}));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev')); // Log incoming requests
-
+app.use(morgan('dev'));
 
 // MongoDB connection
 mongoose
@@ -34,23 +28,18 @@ mongoose
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => {
-    console.log('MongoDB connected successfully');
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-  });
+  .then(() => console.log('MongoDB connected successfully'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
-// Base Routes
+// Routes
 app.get('/', (req, res) => {
   res.send('Hello, World!');
 });
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/user', userRoutes);
 
-app.use('/api/auth', authRoutes); // Authentication routes
-app.use('/api/events', eventRoutes); // Event routes, protected by authentication
-app.use("/api/user", userRoutes);
-
-// Admin-only route for event creation
+// Admin route
 app.post('/api/admin/events', [authMiddleware, checkAdmin], async (req, res) => {
   const { name, date, location, time, description, capacity } = req.body;
 
@@ -59,7 +48,6 @@ app.post('/api/admin/events', [authMiddleware, checkAdmin], async (req, res) => 
   }
 
   try {
-    
     const newEvent = new Event({
       name,
       date,
@@ -79,19 +67,15 @@ app.post('/api/admin/events', [authMiddleware, checkAdmin], async (req, res) => 
   }
 });
 
-// Fallback route for undefined endpoints
+// Fallback route
 app.use((req, res) => {
   res.status(404).json({ message: 'Endpoint not found' });
 });
 
-// Global Error Handling Middleware
+// Global error handler
 app.use((err, req, res, next) => {
   console.error('Global Error:', err.stack);
   res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
-// Start the server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+export default app; // Export the app
