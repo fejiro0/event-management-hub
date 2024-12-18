@@ -116,4 +116,19 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// Verify route
+router.get('/verify', async (req, res) => {
+  const token = req.headers.authorization?.split(' ')[1]; // Extract the token from the authorization header
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET); // Verify the token
+    res.status(200).json({ message: 'Token is valid', userId: decoded.userId });
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid or expired token' });
+  }
+});
+
 export default router;
