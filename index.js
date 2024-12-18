@@ -41,6 +41,10 @@ mongoose
   });
 
 // Base Routes
+app.get('/', (req, res) => {
+  res.send('Hello, World!');
+});
+
 app.use('/api/auth', authRoutes); // Authentication routes
 app.use('/api/events', eventRoutes); // Event routes, protected by authentication
 app.use("/api/user", userRoutes);
