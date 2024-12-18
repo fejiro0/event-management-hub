@@ -24,6 +24,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 })); // Enable CORS for cross-origin requests
 app.use(express.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev')); // Log incoming requests
 
 
