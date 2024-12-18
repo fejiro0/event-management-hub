@@ -3,13 +3,13 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan'; 
-import { authMiddleware, checkAdmin } from './src/middleware/authMiddleware.js'; 
+import { authMiddleware, checkAdmin } from './middleware/authMiddleware.js'; 
 
 // Import routes
-import authRoutes from './src/routes/authRoutes.js';
-import eventRoutes from './src/routes/eventRoutes.js';
-import Event from './src/models/Event.js';
-import userRoutes from './src/routes/user.js';
+import authRoutes from './routes/authRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
+import Event from './models/Event.js';
+import userRoutes from './routes/user.js';
 
 
 // Load environment variables from .env file
